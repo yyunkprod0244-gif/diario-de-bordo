@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Diário de Bordo: registre suas atividades diárias, mesmo sem internet.">
+  <title>Diário de Bordo</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#f4f1ea" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14161a" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Diário">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Aplica o tema salvo antes da pintura para evitar "piscar" -->
+  <script>
+    try {
+      var temaSalvo = localStorage.getItem('diario-de-bordo:tema');
+      if (temaSalvo) document.documentElement.dataset.tema = temaSalvo;
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="pular-link" href="#conteudo">Pular para o conteúdo</a>
+
+  <header class="topo">
+    <div class="topo__marca">
+      <svg class="bussola" viewBox="0 0 64 64" aria-hidden="true">
+        <circle cx="32" cy="32" r="29" class="bussola__aro"/>
+        <circle cx="32" cy="32" r="22" class="bussola__miolo"/>
+        <g class="bussola__agulha">
+          <path d="M32 12 L37 32 L32 30 L27 32 Z" class="bussola__norte"/>
+          <path d="M32 52 L27 32 L32 34 L37 32 Z" class="bussola__sul"/>
+        </g>
+        <circle cx="32" cy="32" r="2.6" class="bussola__eixo"/>
+      </svg>
+      <div>
+        <h1 class="topo__titulo">Diário de Bordo</h1>
+        <p class="topo__subtitulo">Cada dia, uma anotação.</p>
+      </div>
+    </div>
+
+    <div class="topo__acoes">
+      <span class="status-rede" id="status-rede" role="status" aria-live="polite">
+        <span class="status-rede__ponto" aria-hidden="true"></span>
+        <span class="status-rede__texto">Online</span>
+      </span>
+
+      <button class="botao botao--instalar" id="botao-instalar" type="button" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <span>Instalar app</span>
+      </button>
+
+      <button class="botao-icone" id="botao-tema" type="button" aria-label="Alternar tema claro/escuro">
+        <svg class="icone-sol" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
+        <svg class="icone-lua" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout" id="conteudo">
+    <!-- CREATE -->
+    <section class="painel painel--form" aria-labelledby="titulo-form">
+      <h2 class="painel__titulo" id="titulo-form">Nova entrada</h2>
+
+      <form class="formulario" id="formulario-entrada" novalidate>
+        <div class="campo">
+          <label class="campo__rotulo" for="campo-titulo">Título</label>
+          <input class="campo__entrada" id="campo-titulo" name="titulo" type="text"
+                 maxlength="80" placeholder="Ex.: Revisei o projeto de PWA" autocomplete="off" required>
+          <p class="campo__erro" id="erro-titulo" aria-live="polite"></p>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="campo-descricao">
+            Descrição <span class="campo__contador" id="contador-descricao">0/600</span>
+          </label>
+          <textarea class="campo__entrada campo__entrada--area" id="campo-descricao" name="descricao"
+                    rows="5" maxlength="600" placeholder="O que aconteceu, o que aprendeu, próximos passos…" required></textarea>
+          <p class="campo__erro" id="erro-descricao" aria-live="polite"></p>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="campo-data">Data</label>
+          <input class="campo__entrada" id="campo-data" name="data" type="date" required>
+          <p class="campo__erro" id="erro-data" aria-live="polite"></p>
+        </div>
+
+        <button class="botao botao--primario" type="submit">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          <span>Registrar entrada</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- READ / DELETE -->
+    <section class="painel painel--lista" aria-labelledby="titulo-lista">
+      <div class="lista-cabecalho">
+        <h2 class="painel__titulo" id="titulo-lista">
+          Registros <span class="contador" id="contador-entradas">0</span>
+        </h2>
+        <label class="busca">
+          <span class="visualmente-oculto">Buscar entradas</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
+          <input id="campo-busca" type="search" placeholder="Buscar…" autocomplete="off">
+        </label>
+      </div>
+
+      <ul class="lista-entradas" id="lista-entradas" aria-live="polite"></ul>
+
+      <div class="vazio" id="estado-vazio" hidden>
+        <svg viewBox="0 0 64 64" aria-hidden="true"><rect x="14" y="8" width="36" height="48" rx="4"/><path d="M22 20h20M22 28h20M22 36h12"/></svg>
+        <p class="vazio__titulo" id="vazio-titulo">Nenhuma entrada ainda</p>
+        <p class="vazio__texto" id="vazio-texto">Registre sua primeira atividade no formulário.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p>© 2026 Douglas Henrique</p>
+  </footer>
+
+  <!-- Toast de feedback (remoção com desfazer, instalação, etc.) -->
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden>
+    <span class="toast__texto" id="toast-texto"></span>
+    <button class="toast__acao" id="toast-acao" type="button" hidden>Desfazer</button>
+  </div>
+
+  <!-- Molde de cada entrada da lista -->
+  <template id="modelo-entrada">
+    <li class="entrada">
+      <article class="entrada__cartao">
+        <time class="entrada__data"></time>
+        <h3 class="entrada__titulo"></h3>
+        <p class="entrada__descricao"></p>
+        <button class="entrada__remover" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+          <span class="visualmente-oculto">Remover</span>
+        </button>
+      </article>
+    </li>
+  </template>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
